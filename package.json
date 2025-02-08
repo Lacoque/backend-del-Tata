@@ -6,8 +6,6 @@
     "start": "wrangler dev"
   },
   "dependencies": {
-    "google-auth-library": "^9.0.0",
-    "googleapis": "^144.0.0",
-    "itty-router": "^3.5.0"
+    "itty-router": "^4.2.2"
   }
 }
