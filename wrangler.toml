@@ -1,6 +1,6 @@
 name = "backend-del-tata" # Nombre de tu Worker
 main = "worker.js"   # Archivo principal de tu Worker
-compatibiliy_date = "2025-02-08"
+compatibility_date = "2025-02-08"
 compatibility_flags = ["nodejs_compat"]
 
 # Variables de entorno
