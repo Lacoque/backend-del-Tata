@@ -1,23 +1,22 @@
 import { Router } from 'itty-router';
 
-// Crea un router para manejar rutas
+
 const router = Router();
 
-// Middleware para agregar encabezados CORS
+
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*", // Permite solicitudes desde cualquier origen (*)
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", // Métodos HTTP permitidos
-    "Access-Control-Allow-Headers": "Content-Type" // Encabezados permitidos
+    "Access-Control-Allow-Origin": "*", 
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", 
+    "Access-Control-Allow-Headers": "Content-Type"
 };
 
-// Maneja solicitudes OPTIONS (preflight)
+
 router.options('*', () => {
     return new Response(null, {
         headers: corsHeaders
     });
 });
 
-// Endpoint para subir archivos a Google Drive
 router.post('/upload', async (request) => {
     try {
         const formData = await request.formData();
@@ -84,10 +83,10 @@ router.post('/upload', async (request) => {
 });
 
 // Función para generar un JWT
-function generateJWT() {
+function generateJWT(env) {
     const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const claimSet = btoa(JSON.stringify({
-        iss: GOOGLE_DRIVE_CLIENT_EMAIL,
+        iss: env.GOOGLE_DRIVE_CLIENT_EMAIL,
         scope: 'https://www.googleapis.com/auth/drive',
         aud: 'https://oauth2.googleapis.com/token',
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -95,9 +94,9 @@ function generateJWT() {
     }));
 
     const unsignedToken = `${header}.${claimSet}`;
-    const privateKey = GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const privateKey = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    
 
-    // Firma el token con la clave privada
     const signature = crypto.subtle.sign(
         { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
         privateKey,
