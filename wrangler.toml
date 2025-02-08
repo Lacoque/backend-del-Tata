@@ -1,5 +1,6 @@
 name = "backend-del-tata" # Nombre de tu Worker
 main = "worker.js"   # Archivo principal de tu Worker
+fecha_compatibilidad = "2025-02-08"
 
 # Variables de entorno
 [vars]
