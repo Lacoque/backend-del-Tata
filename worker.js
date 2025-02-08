@@ -2,13 +2,22 @@ import { Router } from 'itty-router';
 
 // Crea un router para manejar rutas
 const router = Router();
+
+// Middleware para agregar encabezados CORS
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*", // Permite solicitudes desde cualquier origen (*)
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS", // Métodos HTTP permitidos
     "Access-Control-Allow-Headers": "Content-Type" // Encabezados permitidos
 };
 
-// Endpoint para subir archivos a Google Drive y enviar correos
+// Maneja solicitudes OPTIONS (preflight)
+router.options('*', () => {
+    return new Response(null, {
+        headers: corsHeaders
+    });
+});
+
+// Endpoint para subir archivos a Google Drive
 router.post('/upload', async (request) => {
     try {
         const formData = await request.formData();
@@ -58,12 +67,18 @@ router.post('/upload', async (request) => {
         await sendEmail(email, fileLinks);
 
         return new Response(JSON.stringify({ links: fileLinks }), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json'
+            }
         });
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                ...corsHeaders,
+                'Content-Type': 'application/json'
+            }
         });
     }
 });
