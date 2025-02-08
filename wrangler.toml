@@ -1,4 +1,4 @@
-name = "tata-worker" # Nombre de tu Worker
+name = "backend-del-tata" # Nombre de tu Worker
 main = "worker.js"   # Archivo principal de tu Worker
 
 # Variables de entorno
