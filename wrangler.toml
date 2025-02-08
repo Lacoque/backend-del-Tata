@@ -1,6 +1,7 @@
 name = "backend-del-tata" # Nombre de tu Worker
 main = "worker.js"   # Archivo principal de tu Worker
-fecha_compatibilidad = "2025-02-08"
+compatibiliy_date = "2025-02-08"
+compatibility_flags = ["nodejs_compat"]
 
 # Variables de entorno
 [vars]
@@ -14,8 +15,8 @@ GOOGLE_DRIVE_AUTH_URI="https://accounts.google.com/o/oauth2/auth"
 GOOGLE_DRIVE_TOKEN_URI="https://oauth2.googleapis.com/token"
 GOOGLE_DRIVE_AUTH_PROVIDER_X509_CERT_URL="https://www.googleapis.com/oauth2/v1/certs"
 GOOGLE_DRIVE_CLIENT_X509_CERT_URL="https://www.googleapis.com/robot/v1/metadata/x509/backend-service-account%40nuevoproyecto2026.iam.gserviceaccount.com"
-# Habilita compatibilidad con Node.js
-compatibility_flags = ["nodejs_compat"]
+
+
 EMAILJS_SERVICE_ID = "service_a3g0l17"
 EMAILJS_TEMPLATE_ID = "template_x4mo2hj"
 EMAILJS_USER_ID = "3-Q_I_P3_12dxNIJb"
