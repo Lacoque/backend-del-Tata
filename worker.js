@@ -2,6 +2,11 @@ import { Router } from 'itty-router';
 
 // Crea un router para manejar rutas
 const router = Router();
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*", // Permite solicitudes desde cualquier origen (*)
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", // Métodos HTTP permitidos
+    "Access-Control-Allow-Headers": "Content-Type" // Encabezados permitidos
+};
 
 // Endpoint para subir archivos a Google Drive y enviar correos
 router.post('/upload', async (request) => {
