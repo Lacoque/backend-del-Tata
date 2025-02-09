@@ -27,9 +27,10 @@ router.post('/upload', async (request) => {
         const fileLinks = await Promise.all(
             files.map(async (file) => {
                 const buffer = await file.arrayBuffer();
+                const base64Data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
                 // Genera un token JWT para autenticación
-                const jwtToken = generateJWT();
+                const jwtToken = generateJWT(env);
 
                 // Sube el archivo a Google Drive
                 const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
@@ -38,7 +39,7 @@ router.post('/upload', async (request) => {
                         Authorization: `Bearer ${jwtToken}`,
                         'Content-Type': 'multipart/related; boundary=boundary'
                     },
-                    body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name": "${file.name}"}\r\n--boundary\r\nContent-Type: ${file.type}\r\n\r\n${Buffer.from(buffer).toString('base64')}\r\n--boundary--`
+                    body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name": "${file.name}"}\r\n--boundary\r\nContent-Type: ${file.type}\r\n\r\n${base64Data}\r\n--boundary--`
                 });
 
                 const uploadData = await uploadResponse.json();
@@ -57,8 +58,7 @@ router.post('/upload', async (request) => {
                 // Obtiene el enlace público del archivo
                 const fileResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webContentLink`);
                 const fileData = await fileResponse.json();
-
-                return fileData.webContentLink;
+                 return fileData.webContentLink;
             })
         );
 
