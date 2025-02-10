@@ -1,32 +1,63 @@
-import { Router } from './lib/index.js';
+// Importa la función `sign` para generar tokens JWT
+import { sign } from '@cfworker/jwt';
 
+// Código mínimo de itty-router
+const Router = () => {
+    const routes = [];
+    const router = async (request, ...args) => {
+        for (const route of routes) {
+            const match = request.url.match(route.pattern);
+            if (match) {
+                const params = Object.fromEntries(
+                    [...match.slice(1)].map((value, index) => [route.keys[index] || index, value])
+                );
+                return await route.handler({ request, params }, ...args);
+            }
+        }
+        return new Response("Not Found", { status: 404 });
+    };
+    router.get = (pattern, handler) => routes.push({ pattern, handler, keys: [] });
+    router.post = (pattern, handler) => routes.push({ pattern, handler, keys: [] });
+    router.options = (pattern, handler) => routes.push({ pattern, handler, keys: [] });
+    router.all = (pattern, handler) => routes.push({ pattern, handler, keys: [] });
+    return router;
+};
+
+// Exporta el router
+export { Router };
+
+// Inicializa el router
 const router = Router();
 
+// Encabezados CORS
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
 };
 
+// Maneja solicitudes OPTIONS para CORS
 router.options('*', () => {
     return new Response(null, {
         headers: corsHeaders
     });
 });
 
+// Ruta POST para subir archivos
 router.post('/upload', async (request, env) => {
     try {
         const formData = await request.formData();
         const files = formData.getAll('files');
         const email = formData.get('email');
 
+        // Procesa cada archivo
         const fileLinks = await Promise.all(
             files.map(async (file) => {
                 const buffer = await file.arrayBuffer();
                 const base64Data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-
                 const jwtToken = generateJWT(env);
 
+                // Sube el archivo a Google Drive
                 const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: {
@@ -39,6 +70,7 @@ router.post('/upload', async (request, env) => {
                 const uploadData = await uploadResponse.json();
                 const fileId = uploadData.id;
 
+                // Configura permisos públicos para el archivo
                 await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
                     method: 'POST',
                     headers: {
@@ -48,14 +80,17 @@ router.post('/upload', async (request, env) => {
                     body: JSON.stringify({ role: 'reader', type: 'anyone' })
                 });
 
+                // Obtiene el enlace público del archivo
                 const fileResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webContentLink`);
                 const fileData = await fileResponse.json();
                 return fileData.webContentLink;
             })
         );
 
+        // Envía un correo electrónico con los enlaces
         await sendEmail(email, fileLinks);
 
+        // Devuelve los enlaces como respuesta
         return new Response(JSON.stringify({ links: fileLinks }), {
             headers: {
                 ...corsHeaders,
@@ -73,28 +108,20 @@ router.post('/upload', async (request, env) => {
     }
 });
 
+// Genera un token JWT para autenticación con Google Drive
 function generateJWT(env) {
-    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-    const claimSet = btoa(JSON.stringify({
+    const claimSet = {
         iss: env.GOOGLE_DRIVE_CLIENT_EMAIL,
         scope: 'https://www.googleapis.com/auth/drive',
         aud: 'https://oauth2.googleapis.com/token',
         exp: Math.floor(Date.now() / 1000) + 3600,
         iat: Math.floor(Date.now() / 1000)
-    }));
-
-    const unsignedToken = `${header}.${claimSet}`;
+    };
     const privateKey = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n');
-
-    const signature = crypto.subtle.sign(
-        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-        privateKey,
-        new TextEncoder().encode(unsignedToken)
-    );
-
-    return `${unsignedToken}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
+    return sign(claimSet, privateKey, 'RS256');
 }
 
+// Envía un correo electrónico con los enlaces de los archivos
 async function sendEmail(email, fileLinks) {
     const emailTemplate = `
         <h1>Tus archivos han sido cargados exitosamente</h1>
@@ -119,8 +146,10 @@ async function sendEmail(email, fileLinks) {
     });
 }
 
+// Maneja todas las demás rutas
 router.all('*', () => new Response('Not Found', { status: 404 }));
 
+// Exporta el Worker
 export default {
     fetch: (request, env, ctx) => router.handle(request, env, ctx)
 };
