@@ -5,30 +5,21 @@ import { SignJWT } from 'jose'; // Importa SignJWT desde jose
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
-// Variables de entorno
-const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
-const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Asegúrate de que los saltos de línea estén correctamente formateados
-const GOOGLE_DRIVE_CLIENT_EMAIL = env.GOOGLE_DRIVE_CLIENT_EMAIL;
-
-const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
-const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
-const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
-
 // Función para generar un token JWT
-async function generateGoogleDriveAccessToken() {
+async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
   const now = Math.floor(Date.now() / 1000);
 
-  const privateKey = new TextEncoder().encode(GOOGLE_DRIVE_PRIVATE_KEY); // Convierte la clave privada a Uint8Array
+  const encodedPrivateKey = new TextEncoder().encode(privateKey); // Convierte la clave privada a Uint8Array
 
   const jwt = await new SignJWT({
-    iss: GOOGLE_DRIVE_CLIENT_EMAIL,
+    iss: clientEmail,
     scope: 'https://www.googleapis.com/auth/drive',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600, // Expira en 1 hora
     iat: now,
   })
     .setProtectedHeader({ alg: 'RS256' }) // Algoritmo RS256
-    .sign(privateKey); // Firma el token con la clave privada
+    .sign(encodedPrivateKey); // Firma el token con la clave privada
 
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -45,8 +36,17 @@ async function generateGoogleDriveAccessToken() {
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'POST' && request.url.includes('/upload')) {
-      try {
+    try {
+      // Accede a las variables de entorno desde `env`
+      const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
+      const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Asegúrate de que los saltos de línea estén correctamente formateados
+      const GOOGLE_DRIVE_CLIENT_EMAIL = env.GOOGLE_DRIVE_CLIENT_EMAIL;
+
+      const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
+      const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
+      const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
+
+      if (request.method === 'POST' && request.url.includes('/upload')) {
         const formData = await request.formData();
         const files = formData.getAll('files'); // Archivos adjuntos
         const nombre = formData.get('nombre');
@@ -57,7 +57,10 @@ export default {
         const duracion = formData.get('duracion');
 
         // Paso 1: Generar token de acceso para Google Drive
-        const accessToken = await generateGoogleDriveAccessToken();
+        const accessToken = await generateGoogleDriveAccessToken(
+          GOOGLE_DRIVE_PRIVATE_KEY,
+          GOOGLE_DRIVE_CLIENT_EMAIL
+        );
 
         // Paso 2: Subir archivos a Google Drive
         const fileUrls = await Promise.all(
@@ -114,16 +117,16 @@ export default {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         });
-      } catch (error) {
-        console.error('Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        });
       }
-    }
 
-    // Manejar otras rutas o métodos no permitidos
-    return new Response('Método no permitido', { status: 405 });
+      // Manejar otras rutas o métodos no permitidos
+      return new Response('Método no permitido', { status: 405 });
+    } catch (error) {
+      console.error('Error:', error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   },
 };
