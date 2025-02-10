@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "@cfworker/jwt": "^7.0.4"
-  }
-}
