@@ -1,4 +1,4 @@
-import { Router } from '/lib/itty-router.js';
+import { Router } from '/lib/itty-router.ts';
 
 const router = Router();
 
