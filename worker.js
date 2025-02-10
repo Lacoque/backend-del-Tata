@@ -1,4 +1,4 @@
-import { Router } from 'https://esm.sh/itty-router';
+import { Router } from './lib/itty-router.js';
 
 const router = Router();
 
