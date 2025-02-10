@@ -1,5 +1,7 @@
 // worker.js
 
+import { SignJWT } from 'jose'; // Importa SignJWT desde jose
+
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
@@ -14,25 +16,26 @@ const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
 
 // Función para generar un token JWT
 async function generateGoogleDriveAccessToken() {
-  const jwt = await import('jsonwebtoken');
   const now = Math.floor(Date.now() / 1000);
 
-  const payload = {
+  const privateKey = new TextEncoder().encode(GOOGLE_DRIVE_PRIVATE_KEY); // Convierte la clave privada a Uint8Array
+
+  const jwt = await new SignJWT({
     iss: GOOGLE_DRIVE_CLIENT_EMAIL,
     scope: 'https://www.googleapis.com/auth/drive',
     aud: 'https://oauth2.googleapis.com/token',
     exp: now + 3600, // Expira en 1 hora
     iat: now,
-  };
-
-  const token = jwt.sign(payload, GOOGLE_DRIVE_PRIVATE_KEY, { algorithm: 'RS256' });
+  })
+    .setProtectedHeader({ alg: 'RS256' }) // Algoritmo RS256
+    .sign(privateKey); // Firma el token con la clave privada
 
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: token,
+      assertion: jwt,
     }),
   });
 

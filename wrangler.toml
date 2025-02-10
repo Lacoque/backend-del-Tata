@@ -20,3 +20,6 @@ GOOGLE_DRIVE_CLIENT_X509_CERT_URL="https://www.googleapis.com/robot/v1/metadata/
 EMAILJS_SERVICE_ID = "service_a3g0l17"
 EMAILJS_TEMPLATE_ID = "template_x4mo2hj"
 EMAILJS_USER_ID = "3-Q_I_P3_12dxNIJb"
+# Configuración de módulos externos
+[node_compat]
+enabled = true # Habilita compatibilidad con Node.js para usar jsonwebtoken
