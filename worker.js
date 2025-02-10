@@ -1,5 +1,5 @@
 // Importa la función `sign` para generar tokens JWT
-import { sign } from '@cfworker/jwt';
+import { createSigner } from '@cfworker/jwt';
 
 // Código mínimo de itty-router
 const Router = () => {
@@ -108,18 +108,20 @@ router.post('/upload', async (request, env) => {
     }
 });
 
-// Genera un token JWT para autenticación con Google Drive
-function generateJWT(env) {
-    const claimSet = {
-        iss: env.GOOGLE_DRIVE_CLIENT_EMAIL,
-        scope: 'https://www.googleapis.com/auth/drive',
-        aud: 'https://oauth2.googleapis.com/token',
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        iat: Math.floor(Date.now() / 1000)
-    };
-    const privateKey = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n');
-    return sign(claimSet, privateKey, 'RS256');
-}
+// Crea una función para firmar tokens JWT
+const sign = createSigner({
+    key: privateKey, // Tu clave privada
+    algorithm: 'RS256' // Algoritmo de firma
+});
+
+// Genera un token JWT
+const token = sign({
+    iss: 'your-client-email',
+    scope: 'https://www.googleapis.com/auth/drive',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    iat: Math.floor(Date.now() / 1000)
+});
 
 // Envía un correo electrónico con los enlaces de los archivos
 async function sendEmail(email, fileLinks) {
