@@ -2,7 +2,8 @@ name = "backend-del-tata"
 main = "worker.js"   # Archivo principal de tu Worker
 compatibility_date = "2025-02-08"
 
-
+# Configuración de la cuenta
+account_id = "941c7578081b2ab8ee7836b33373b5da"
 # Variables de entorno
 [vars]
 GOOGLE_DRIVE_TYPE="service_account"
@@ -20,5 +21,6 @@ GOOGLE_DRIVE_CLIENT_X509_CERT_URL="https://www.googleapis.com/robot/v1/metadata/
 EMAILJS_SERVICE_ID = "service_a3g0l17"
 EMAILJS_TEMPLATE_ID = "template_x4mo2hj"
 EMAILJS_USER_ID = "3-Q_I_P3_12dxNIJb"
-# Configuración de módulos externos
+# Configuración de módulos externoswrangler whoami
+
 node_compat = true
