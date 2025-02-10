@@ -1,4 +1,4 @@
-import { Router } from 'itty-router';
+import { Router } from 'https://cdn.skypack.dev/itty-router';
 
 const router = Router();
 
