@@ -37,6 +37,18 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
 export default {
   async fetch(request, env) {
     try {
+      const url = new URL(request.url);
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204, // No Content
+          headers: {
+            'Access-Control-Allow-Origin': '*', // Permite solicitudes desde cualquier origen
+            'Access-Control-Allow-Methods': 'POST, OPTIONS', // Métodos permitidos
+            'Access-Control-Allow-Headers': 'Content-Type', // Encabezados permitidos
+          },
+        });
+      }
+
       // Accede a las variables de entorno desde `env`
       const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
       const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Asegúrate de que los saltos de línea estén correctamente formateados
@@ -46,7 +58,7 @@ export default {
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
 
-      if (request.method === 'POST' && request.url.includes('/upload')) {
+      if (request.method === 'POST' && url.pathname === '/upload')  {
         const formData = await request.formData();
         const files = formData.getAll('files'); // Archivos adjuntos
         const nombre = formData.get('nombre');
@@ -115,7 +127,8 @@ export default {
         // Respuesta exitosa
         return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*', },
         });
       }
 
@@ -125,7 +138,8 @@ export default {
       console.error('Error:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*', },
       });
     }
   },
