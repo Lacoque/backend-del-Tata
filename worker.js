@@ -1,15 +1,12 @@
 import { Router } from 'itty-router';
 
-
 const router = Router();
 
-
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*", 
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", 
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
 };
-
 
 router.options('*', () => {
     return new Response(null, {
@@ -17,22 +14,19 @@ router.options('*', () => {
     });
 });
 
-router.post('/upload', async (request) => {
+router.post('/upload', async (request, env) => {
     try {
         const formData = await request.formData();
         const files = formData.getAll('files');
-        const email = formData.get('email'); // Obtener el correo del formulario
+        const email = formData.get('email');
 
-        // Sube cada archivo a Google Drive
         const fileLinks = await Promise.all(
             files.map(async (file) => {
                 const buffer = await file.arrayBuffer();
                 const base64Data = btoa(String.fromCharCode(...new Uint8Array(buffer)));
 
-                // Genera un token JWT para autenticación
                 const jwtToken = generateJWT(env);
 
-                // Sube el archivo a Google Drive
                 const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
                     method: 'POST',
                     headers: {
@@ -45,7 +39,6 @@ router.post('/upload', async (request) => {
                 const uploadData = await uploadResponse.json();
                 const fileId = uploadData.id;
 
-                // Haz el archivo público
                 await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
                     method: 'POST',
                     headers: {
@@ -55,14 +48,12 @@ router.post('/upload', async (request) => {
                     body: JSON.stringify({ role: 'reader', type: 'anyone' })
                 });
 
-                // Obtiene el enlace público del archivo
                 const fileResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webContentLink`);
                 const fileData = await fileResponse.json();
-                 return fileData.webContentLink;
+                return fileData.webContentLink;
             })
         );
 
-        // Envía los enlaces por correo usando EmailJS
         await sendEmail(email, fileLinks);
 
         return new Response(JSON.stringify({ links: fileLinks }), {
@@ -82,7 +73,6 @@ router.post('/upload', async (request) => {
     }
 });
 
-// Función para generar un JWT
 function generateJWT(env) {
     const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
     const claimSet = btoa(JSON.stringify({
@@ -95,7 +85,6 @@ function generateJWT(env) {
 
     const unsignedToken = `${header}.${claimSet}`;
     const privateKey = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n');
-    
 
     const signature = crypto.subtle.sign(
         { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
@@ -106,7 +95,6 @@ function generateJWT(env) {
     return `${unsignedToken}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
 }
 
-// Función para enviar correos con EmailJS
 async function sendEmail(email, fileLinks) {
     const emailTemplate = `
         <h1>Tus archivos han sido cargados exitosamente</h1>
@@ -120,9 +108,9 @@ async function sendEmail(email, fileLinks) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_USER_ID,
+            service_id: env.EMAILJS_SERVICE_ID,
+            template_id: env.EMAILJS_TEMPLATE_ID,
+            user_id: env.EMAILJS_USER_ID,
             template_params: {
                 to_email: email,
                 message: emailTemplate
@@ -131,10 +119,8 @@ async function sendEmail(email, fileLinks) {
     });
 }
 
-// Maneja todas las demás rutas
 router.all('*', () => new Response('Not Found', { status: 404 }));
 
-// Exporta el Worker
 export default {
     fetch: (request, env, ctx) => router.handle(request, env, ctx)
 };
