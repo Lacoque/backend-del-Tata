@@ -1,4 +1,4 @@
-import { Router } from 'https://cdn.skypack.dev/itty-router';
+import { Router } from 'https://esm.sh/itty-router';
 
 const router = Router();
 

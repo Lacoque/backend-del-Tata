@@ -1,4 +1,4 @@
-name = "backend-del-tata" # Nombre de tu Worker
+name = "backend-del-tata" 
 main = "worker.js"   # Archivo principal de tu Worker
 compatibility_date = "2025-02-08"
 compatibility_flags = ["nodejs_compat"]
