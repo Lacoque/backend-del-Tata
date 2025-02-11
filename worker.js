@@ -58,6 +58,7 @@ export default {
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
+      console.log('Clave privada recibida:', GOOGLE_DRIVE_PRIVATE_KEY);
 
       if (request.method === 'POST' && url.pathname === '/upload')  {
         const formData = await request.formData();
