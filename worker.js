@@ -89,10 +89,12 @@ export default {
 
         // Paso 1: Generar token de acceso para Google Drive
         const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
+        console.log('Token de acceso recibido:', accessToken);
 
         // Paso 2: Subir archivos a Google Drive
         const fileUrls = await Promise.all(
           files.map(async (file) => {
+            const fileData = await file.arrayBuffer();
             const response = await fetch(`${GOOGLE_DRIVE_API_URL}?uploadType=multipart`, {
               method: 'POST',
               headers: {
