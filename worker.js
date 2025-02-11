@@ -20,6 +20,7 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     })
       .setProtectedHeader({ alg: 'RS256' }) // Algoritmo RS256
       .sign(privateKeyJWK); // Firma el token con la clave privada
+      console.log('Token JWT generado:', jwt);
 
     // Usa el token JWT para obtener un token de acceso
     const response = await fetch('https://oauth2.googleapis.com/token', {
