@@ -1,6 +1,6 @@
 // worker.js
 
-import { SignJWT } from 'jose'; // Importa SignJWT desde jose
+import { SignJWT, importPKCS8 } from 'jose'; // Importa SignJWT desde jose
 
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
@@ -9,7 +9,8 @@ const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
   const now = Math.floor(Date.now() / 1000);
 
-  const encodedPrivateKey = new TextEncoder().encode(privateKey); // Convierte la clave privada a Uint8Array
+  const privateKeyBuffer = GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n').trim(); // Asegúrate de que los saltos de línea estén correctamente formateados
+  const privateKeyJWK = await importPKCS8(privateKeyBuffer, 'RS256');
 
   const jwt = await new SignJWT({
     iss: clientEmail,
@@ -51,7 +52,7 @@ export default {
 
       // Accede a las variables de entorno desde `env`
       const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
-      const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n'); // Asegúrate de que los saltos de línea estén correctamente formateados
+      const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY;// Asegúrate de que los saltos de línea estén correctamente formateados
       const GOOGLE_DRIVE_CLIENT_EMAIL = env.GOOGLE_DRIVE_CLIENT_EMAIL;
 
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
