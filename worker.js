@@ -1,44 +1,54 @@
-// worker.js
+import { SignJWT, importPKCS8 } from 'jose';
 
-import { SignJWT, importPKCS8 } from 'jose'; // Importa SignJWT desde jose
-
+// URLs de las APIs
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
 // Función para generar un token JWT
 async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
-  const now = Math.floor(Date.now() / 1000);
+  try {
+    // Importa la clave privada en formato PKCS#8
+    const privateKeyJWK = await importPKCS8(privateKey, 'RS256');
 
-  const privateKeyBuffer = GOOGLE_DRIVE_PRIVATE_KEY.replace(/\\n/g, '\n').trim(); // Asegúrate de que los saltos de línea estén correctamente formateados
-  const privateKeyJWK = await importPKCS8(privateKeyBuffer, 'RS256');
+    // Genera el token JWT
+    const jwt = await new SignJWT({
+      iss: clientEmail,
+      scope: 'https://www.googleapis.com/auth/drive',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: Math.floor(Date.now() / 1000) + 3600, // Expira en 1 hora
+      iat: Math.floor(Date.now() / 1000), // Tiempo actual
+    })
+      .setProtectedHeader({ alg: 'RS256' }) // Algoritmo RS256
+      .sign(privateKeyJWK); // Firma el token con la clave privada
 
-  const jwt = await new SignJWT({
-    iss: clientEmail,
-    scope: 'https://www.googleapis.com/auth/drive',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600, // Expira en 1 hora
-    iat: now,
-  })
-    .setProtectedHeader({ alg: 'RS256' }) // Algoritmo RS256
-    .sign(encodedPrivateKey); // Firma el token con la clave privada
+    // Usa el token JWT para obtener un token de acceso
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt,
+      }),
+    });
 
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
+    if (!response.ok) {
+      throw new Error(`Error al obtener el token de acceso: ${response.status} ${response.statusText}`);
+    }
 
-  const data = await response.json();
-  return data.access_token;
+    const data = await response.json();
+    return data.access_token;
+  } catch (error) {
+    console.error('Error al generar el token JWT:', error);
+    throw error;
+  }
 }
 
 export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
+
+      // Maneja solicitudes CORS (preflight)
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           status: 204, // No Content
@@ -50,17 +60,23 @@ export default {
         });
       }
 
-      // Accede a las variables de entorno desde `env`
-      const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
-      const GOOGLE_DRIVE_PRIVATE_KEY = env.GOOGLE_DRIVE_PRIVATE_KEY;// Asegúrate de que los saltos de línea estén correctamente formateados
-      const GOOGLE_DRIVE_CLIENT_EMAIL = env.GOOGLE_DRIVE_CLIENT_EMAIL;
+      // Accede al JSON completo de las credenciales desde `env`
+      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+      const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim(); // Asegura los saltos de línea
+      const clientEmail = credentials.client_email;
 
+      // Accede a otras variables de entorno
+      const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
-      console.log('Clave privada recibida:', GOOGLE_DRIVE_PRIVATE_KEY);
 
-      if (request.method === 'POST' && url.pathname === '/upload')  {
+      // Verifica que las credenciales se cargaron correctamente
+      console.log('Clave privada recibida:', privateKey);
+      console.log('Correo electrónico del cliente:', clientEmail);
+
+      // Maneja la solicitud POST al endpoint `/upload`
+      if (request.method === 'POST' && url.pathname === '/upload') {
         const formData = await request.formData();
         const files = formData.getAll('files'); // Archivos adjuntos
         const nombre = formData.get('nombre');
@@ -71,10 +87,7 @@ export default {
         const duracion = formData.get('duracion');
 
         // Paso 1: Generar token de acceso para Google Drive
-        const accessToken = await generateGoogleDriveAccessToken(
-          GOOGLE_DRIVE_PRIVATE_KEY,
-          GOOGLE_DRIVE_CLIENT_EMAIL
-        );
+        const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
 
         // Paso 2: Subir archivos a Google Drive
         const fileUrls = await Promise.all(
@@ -129,8 +142,10 @@ export default {
         // Respuesta exitosa
         return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*', },
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
         });
       }
 
@@ -140,8 +155,10 @@ export default {
       console.error('Error:', error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       });
     }
   },
