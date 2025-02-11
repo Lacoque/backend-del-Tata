@@ -104,7 +104,7 @@ export default {
               body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{
                 "name": "${file.name}",
                 "parents": ["${GOOGLE_DRIVE_FOLDER_ID}"]
-              }\r\n--boundary\r\nContent-Type: ${file.type}\r\n\r\n${await file.text()}\r\n--boundary--`,
+              }\r\n--boundary\r\nContent-Type: ${file.type}\r\n\r\n${Buffer.from(fileData).toString('base64')}\r\n--boundary--`,
             });
 
             if (!response.ok) {
