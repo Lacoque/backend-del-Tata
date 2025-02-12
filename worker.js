@@ -53,38 +53,25 @@ export default {
         });
       }
 
-      // Accede al JSON completo de las credenciales desde `env`
-      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
-      const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim();
-      const clientEmail = credentials.client_email;
-
-      // Accede a otras variables de entorno
+      // Accede a las variables de entorno desde `env`
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_PUBLIC_KEY = env.EMAILJS_PUBLIC_KEY;
+
       console.log('EMAILJS_SERVICE_ID:', EMAILJS_SERVICE_ID);
       console.log('EMAILJS_TEMPLATE_ID:', EMAILJS_TEMPLATE_ID);
       console.log('EMAILJS_PUBLIC_KEY:', EMAILJS_PUBLIC_KEY);
-
-     
-
-      // Endpoint para obtener el token de acceso
-      if (request.method === 'GET' && url.pathname === '/get-access-token') {
-        const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
-        return new Response(JSON.stringify({ accessToken }), {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      }
 
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
         const formData = await request.json();
 
         const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
+
+        // Validación de datos
+        if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls.length) {
+          throw new Error('Faltan datos obligatorios en el formulario');
+        }
 
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
@@ -107,7 +94,7 @@ export default {
           body: JSON.stringify({
             service_id: EMAILJS_SERVICE_ID,
             template_id: EMAILJS_TEMPLATE_ID,
-            public_key: EMAILJS_PUBLIC_KEY,
+            user_id: EMAILJS_PUBLIC_KEY, // Usa la clave pública en lugar del antiguo user_id
             template_params: {
               nombre,
               email,
@@ -121,7 +108,9 @@ export default {
         });
 
         if (!emailResponse.ok) {
-          throw new Error('Error al enviar el correo electrónico');
+          const errorDetails = await emailResponse.text(); // Captura la respuesta completa
+          console.error('Error al enviar el correo electrónico:', errorDetails);
+          throw new Error(`Error al enviar el correo electrónico: ${errorDetails}`);
         }
 
         return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
