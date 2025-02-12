@@ -52,6 +52,32 @@ export default {
       if (request.method === 'OPTIONS') {
         return addCorsHeaders(new Response(null, { status: 204 }));
       }
+      // Endpoint para obtener el token de acceso
+      if (request.method === 'GET' && url.pathname === '/get-access-token') {
+        try {
+          const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
+          console.log('Token de acceso generado:', accessToken);
+          return addCorsHeaders(
+            new Response(JSON.stringify({ accessToken }), {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+          );
+        } catch (error) {
+          console.error('Error al generar el token de acceso:', error);
+          return addCorsHeaders(
+            new Response(JSON.stringify({ error: 'Error al generar el token de acceso' }), {
+              status: 500,
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+          );
+        }
+      }
+
 
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
