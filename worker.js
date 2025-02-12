@@ -38,11 +38,10 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
 // Función para agregar encabezados CORS a todas las respuestas
 function addCorsHeaders(response) {
   response.headers.set('Access-Control-Allow-Origin', '*'); // Permite solicitudes desde cualquier origen
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Métodos permitidos
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Métodos permitidos
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type'); // Encabezados permitidos
   return response;
 }
-
 
 export default {
   async fetch(request, env) {
@@ -54,14 +53,29 @@ export default {
         return addCorsHeaders(new Response(null, { status: 204 }));
       }
 
-      // Accede a las variables de entorno desde `env`
+      // Accede al JSON completo de las credenciales desde `env`
+      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+      const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim();
+      const clientEmail = credentials.client_email;
+
+      // Accede a otras variables de entorno
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_PUBLIC_KEY = env.EMAILJS_PUBLIC_KEY;
 
-      console.log('EMAILJS_SERVICE_ID:', EMAILJS_SERVICE_ID);
-      console.log('EMAILJS_TEMPLATE_ID:', EMAILJS_TEMPLATE_ID);
-      console.log('EMAILJS_PUBLIC_KEY:', EMAILJS_PUBLIC_KEY);
+      console.log('Clave privada recibida:', privateKey);
+      console.log('Correo electrónico del cliente:', clientEmail);
+
+      // Endpoint para obtener el token de acceso
+      if (request.method === 'GET' && url.pathname === '/get-access-token') {
+        const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
+        return addCorsHeaders(new Response(JSON.stringify({ accessToken }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }));
+      }
 
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
@@ -114,26 +128,24 @@ export default {
           throw new Error(`Error al enviar el correo electrónico: ${errorDetails}`);
         }
 
-        return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
+        return addCorsHeaders(new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
           },
-        });
+        }));
       }
 
       // Manejar otras rutas o métodos no permitidos
-      return new Response('Método no permitido', { status: 405 });
+      return addCorsHeaders(new Response('Método no permitido', { status: 405 }));
     } catch (error) {
       console.error('Error:', error);
-      return new Response(JSON.stringify({ error: error.message }), {
+      return addCorsHeaders(new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
         },
-      });
+      }));
     }
   },
 };
