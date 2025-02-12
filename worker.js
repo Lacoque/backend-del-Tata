@@ -35,6 +35,14 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     throw error;
   }
 }
+// Función para agregar encabezados CORS a todas las respuestas
+function addCorsHeaders(response) {
+  response.headers.set('Access-Control-Allow-Origin', '*'); // Permite solicitudes desde cualquier origen
+  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS'); // Métodos permitidos
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type'); // Encabezados permitidos
+  return response;
+}
+
 
 export default {
   async fetch(request, env) {
@@ -43,14 +51,7 @@ export default {
 
       // Maneja solicitudes CORS (preflight)
       if (request.method === 'OPTIONS') {
-        return new Response(null, {
-          status: 204, // No Content
-          headers: {
-            'Access-Control-Allow-Origin': '*', // Permite solicitudes desde cualquier origen
-            'Access-Control-Allow-Methods': 'POST, OPTIONS', // Métodos permitidos
-            'Access-Control-Allow-Headers': 'Content-Type', // Encabezados permitidos
-          },
-        });
+        return addCorsHeaders(new Response(null, { status: 204 }));
       }
 
       // Accede a las variables de entorno desde `env`
