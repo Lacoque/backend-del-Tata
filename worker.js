@@ -1,5 +1,4 @@
 import { SignJWT, importPKCS8 } from 'jose';
-
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
@@ -16,9 +15,7 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     })
       .setProtectedHeader({ alg: 'RS256' })
       .sign(privateKeyJWK);
-
     console.log('Token JWT generado:', jwt);
-
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -27,12 +24,10 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
         assertion: jwt,
       }),
     });
-
     if (!response.ok) {
       const errorDetails = await response.text();
       throw new Error(`Error al obtener el token de acceso: ${response.status} ${response.statusText}. Detalles: ${errorDetails}`);
     }
-
     const data = await response.json();
     return data.access_token;
   } catch (error) {
@@ -64,7 +59,6 @@ export default {
       const clientEmail = credentials.client_email;
 
       // Accede a otras variables de entorno
-      const GOOGLE_DRIVE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID;
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
       const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
@@ -72,58 +66,24 @@ export default {
       console.log('Clave privada recibida:', privateKey);
       console.log('Correo electrónico del cliente:', clientEmail);
 
-      // Maneja la solicitud POST al endpoint `/upload`
-      if (request.method === 'POST' && url.pathname === '/upload') {
-        const formData = await request.formData();
-        const files = formData.getAll('files'); // Archivos adjuntos
-        console.log('Archivos recibidos:', files);
-        const nombre = formData.get('nombre');
-        const email = formData.get('email');
-        const grupo = formData.get('grupo');
-        const espectaculo = formData.get('espectaculo');
-        const sinopsis = formData.get('sinopsis');
-        const duracion = formData.get('duracion');
-        console.log('Datos del formulario:', {
-          nombre,
-          email,
-          grupo,
-          espectaculo,
-          sinopsis,
-          duracion,
-        })
-
-        // Paso 1: Generar token de acceso para Google Drive
+      // Endpoint para obtener el token de acceso
+      if (request.method === 'GET' && url.pathname === '/get-access-token') {
         const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
+        return new Response(JSON.stringify({ accessToken }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        });
+      }
 
-        // Paso 2: Subir archivos a Google Drive
-        const fileUrls = await Promise.all(
-          files.map(async (file) => {
-            const fileData = await file.arrayBuffer();
-            const uint8Array = new Uint8Array(fileData);
-            const base64String = btoa(String.fromCharCode(...uint8Array));
+      // Endpoint para procesar los datos del formulario
+      if (request.method === 'POST' && url.pathname === '/process-form') {
+        const formData = await request.json();
 
-            const response = await fetch(`${GOOGLE_DRIVE_API_URL}?uploadType=multipart`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'multipart/related; boundary=boundary',
-              },
-              body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{
-                "name": "${file.name}",
-                "parents": ["${GOOGLE_DRIVE_FOLDER_ID}"]
-              }\r\n--boundary\r\nContent-Type: ${file.type}\r\n\r\n${base64String}\r\n--boundary--`,
-            });
+        const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
 
-            if (!response.ok) {
-              const errorDetails = await response.text();
-              throw new Error(`Error al subir el archivo ${file.name}: ${response.status} ${response.statusText}. Detalles: ${errorDetails}`);
-            }
-
-            const data = await response.json();
-            return `https://drive.google.com/file/d/${data.id}/view`;
-          })
-        );
-        console.log('URLs de los archivos subidos:', fileUrls);
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
           template_id: EMAILJS_TEMPLATE_ID,
@@ -139,7 +99,6 @@ export default {
           },
         });
 
-        // Paso 3: Enviar los datos del formulario por Email.js
         const emailResponse = await fetch(EMAIL_JS_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -163,7 +122,6 @@ export default {
           throw new Error('Error al enviar el correo electrónico');
         }
 
-        // Respuesta exitosa
         return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
           headers: {
