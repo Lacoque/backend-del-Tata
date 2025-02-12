@@ -61,10 +61,12 @@ export default {
       // Accede a otras variables de entorno
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_USER_ID = env.EMAILJS_USER_ID;
+      const EMAILJS_PUBLIC_KEY = env.EMAILJS_PUBLIC_KEY;
+      console.log('EMAILJS_SERVICE_ID:', EMAILJS_SERVICE_ID);
+      console.log('EMAILJS_TEMPLATE_ID:', EMAILJS_TEMPLATE_ID);
+      console.log('EMAILJS_PUBLIC_KEY:', EMAILJS_PUBLIC_KEY);
 
-      console.log('Clave privada recibida:', privateKey);
-      console.log('Correo electrónico del cliente:', clientEmail);
+     
 
       // Endpoint para obtener el token de acceso
       if (request.method === 'GET' && url.pathname === '/get-access-token') {
@@ -87,7 +89,7 @@ export default {
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
           template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_USER_ID,
+          public_key: EMAILJS_PUBLIC_KEY,
           template_params: {
             nombre,
             email,
@@ -105,7 +107,7 @@ export default {
           body: JSON.stringify({
             service_id: EMAILJS_SERVICE_ID,
             template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_USER_ID,
+            public_key: EMAILJS_PUBLIC_KEY,
             template_params: {
               nombre,
               email,
