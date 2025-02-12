@@ -61,7 +61,7 @@ export default {
       // Accede a otras variables de entorno
       const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
       const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_PUBLIC_KEY = env.EMAILJS_PUBLIC_KEY;
+      const EMAILJS_PRIVATE_KEY = env.EMAILJS_PRIVATE_KEY;
 
       console.log('Clave privada recibida:', privateKey);
       console.log('Correo electrónico del cliente:', clientEmail);
@@ -91,7 +91,7 @@ export default {
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
           template_id: EMAILJS_TEMPLATE_ID,
-          public_key: EMAILJS_PUBLIC_KEY,
+          public_key: EMAILJS_PRIVATE_KEY,
           template_params: {
             nombre,
             email,
@@ -109,7 +109,7 @@ export default {
           body: JSON.stringify({
             service_id: EMAILJS_SERVICE_ID,
             template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PUBLIC_KEY, // Usa la clave pública en lugar del antiguo user_id
+            user_id: EMAILJS_PIVATE_KEY, // Usa la clave pública en lugar del antiguo user_id
             template_params: {
               nombre,
               email,
