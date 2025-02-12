@@ -109,7 +109,7 @@ export default {
           body: JSON.stringify({
             service_id: EMAILJS_SERVICE_ID,
             template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PIVATE_KEY, // Usa la clave pública en lugar del antiguo user_id
+            user_id: EMAILJS_PRIVATE_KEY,
             template_params: {
               nombre,
               email,
