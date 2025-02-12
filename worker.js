@@ -76,12 +76,21 @@ export default {
       if (request.method === 'POST' && url.pathname === '/upload') {
         const formData = await request.formData();
         const files = formData.getAll('files'); // Archivos adjuntos
+        console.log('Archivos recibidos:', files);
         const nombre = formData.get('nombre');
         const email = formData.get('email');
         const grupo = formData.get('grupo');
         const espectaculo = formData.get('espectaculo');
         const sinopsis = formData.get('sinopsis');
         const duracion = formData.get('duracion');
+        console.log('Datos del formulario:', {
+          nombre,
+          email,
+          grupo,
+          espectaculo,
+          sinopsis,
+          duracion,
+        })
 
         // Paso 1: Generar token de acceso para Google Drive
         const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
@@ -114,6 +123,21 @@ export default {
             return `https://drive.google.com/file/d/${data.id}/view`;
           })
         );
+        console.log('URLs de los archivos subidos:', fileUrls);
+        console.log('Datos enviados a Email.js:', {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_USER_ID,
+          template_params: {
+            nombre,
+            email,
+            grupo,
+            espectaculo,
+            sinopsis,
+            duracion,
+            archivos: fileUrls.join(', '),
+          },
+        });
 
         // Paso 3: Enviar los datos del formulario por Email.js
         const emailResponse = await fetch(EMAIL_JS_API_URL, {
