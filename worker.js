@@ -1,4 +1,5 @@
 import { SignJWT, importPKCS8 } from 'jose';
+
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
@@ -15,7 +16,9 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     })
       .setProtectedHeader({ alg: 'RS256' })
       .sign(privateKeyJWK);
+
     console.log('Token JWT generado:', jwt);
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -24,10 +27,12 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
         assertion: jwt,
       }),
     });
+
     if (!response.ok) {
       const errorDetails = await response.text();
       throw new Error(`Error al obtener el token de acceso: ${response.status} ${response.statusText}. Detalles: ${errorDetails}`);
     }
+
     const data = await response.json();
     return data.access_token;
   } catch (error) {
@@ -35,7 +40,8 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     throw error;
   }
 }
-// Función para agregar encabezados CORS a todas las respuestas
+
+// Función para agregar encabezados CORS
 function addCorsHeaders(response) {
   response.headers.set('Access-Control-Allow-Origin', '*'); // Permite solicitudes desde cualquier origen
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Métodos permitidos
@@ -48,36 +54,33 @@ export default {
     try {
       const url = new URL(request.url);
 
+      // Accede a las variables de entorno
+      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
+      const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim();
+      const clientEmail = credentials.client_email;
+
       // Maneja solicitudes CORS (preflight)
       if (request.method === 'OPTIONS') {
         return addCorsHeaders(new Response(null, { status: 204 }));
       }
+
       // Endpoint para obtener el token de acceso
       if (request.method === 'GET' && url.pathname === '/get-access-token') {
         try {
           const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
           console.log('Token de acceso generado:', accessToken);
-          return addCorsHeaders(
-            new Response(JSON.stringify({ accessToken }), {
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            })
-          );
+          return addCorsHeaders(new Response(JSON.stringify({ accessToken }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }));
         } catch (error) {
           console.error('Error al generar el token de acceso:', error);
-          return addCorsHeaders(
-            new Response(JSON.stringify({ error: 'Error al generar el token de acceso' }), {
-              status: 500,
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            })
-          );
+          return addCorsHeaders(new Response(JSON.stringify({ error: 'Error al generar el token de acceso' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          }));
         }
       }
-
 
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
@@ -87,72 +90,50 @@ export default {
 
         // Validación de datos
         if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls.length) {
-          throw new Error('Faltan datos obligatorios en el formulario');
+          return addCorsHeaders(new Response(JSON.stringify({ error: 'Faltan datos obligatorios en el formulario' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }));
         }
 
-        console.log('Datos enviados a Email.js:', {
-          service_id: EMAILJS_SERVICE_ID,
-          template_id: EMAILJS_TEMPLATE_ID,
-          private_key: EMAILJS_PRIVATE_KEY,
-          template_params: {
-            nombre,
-            email,
-            grupo,
-            espectaculo,
-            sinopsis,
-            duracion,
-            archivos: fileUrls.join(', '),
-          },
-        });
+        console.log('Datos enviados a Email.js:', formData);
 
         const emailResponse = await fetch(EMAIL_JS_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PRIVATE_KEY,
-            template_params: {
-              nombre,
-              email,
-              grupo,
-              espectaculo,
-              sinopsis,
-              duracion,
-              archivos: fileUrls.join(', '), // URLs de los archivos subidos
-            },
+            service_id: env.EMAILJS_SERVICE_ID,
+            template_id: env.EMAILJS_TEMPLATE_ID,
+            user_id: env.EMAILJS_PRIVATE_KEY,
+            template_params: formData,
           }),
         });
 
         if (!emailResponse.ok) {
           const errorDetails = await emailResponse.text();
           console.error('Error al enviar el correo electrónico:', errorDetails);
-          throw new Error(`Error al enviar el correo electrónico: ${errorDetails}`);
+          return addCorsHeaders(new Response(JSON.stringify({ error: `Error al enviar el correo electrónico: ${errorDetails}` }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          }));
         }
 
-        // Devuelve una respuesta JSON válida
         return addCorsHeaders(new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
         }));
       }
 
       // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(new Response(JSON.stringify({ error: 'Método no permitido' }), {
         status: 405,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       }));
     } catch (error) {
       console.error('Error:', error);
       return addCorsHeaders(new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       }));
     }
   },
