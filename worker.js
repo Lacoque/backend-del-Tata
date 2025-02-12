@@ -91,7 +91,7 @@ export default {
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
           template_id: EMAILJS_TEMPLATE_ID,
-          public_key: EMAILJS_PRIVATE_KEY,
+          user_id: EMAILJS_PRIVATE_KEY,
           template_params: {
             nombre,
             email,
