@@ -53,30 +53,6 @@ export default {
         return addCorsHeaders(new Response(null, { status: 204 }));
       }
 
-      // Accede al JSON completo de las credenciales desde `env`
-      const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
-      const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim();
-      const clientEmail = credentials.client_email;
-
-      // Accede a otras variables de entorno
-      const EMAILJS_SERVICE_ID = env.EMAILJS_SERVICE_ID;
-      const EMAILJS_TEMPLATE_ID = env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_PRIVATE_KEY = env.EMAILJS_PRIVATE_KEY;
-
-      console.log('Clave privada recibida:', privateKey);
-      console.log('Correo electrónico del cliente:', clientEmail);
-
-      // Endpoint para obtener el token de acceso
-      if (request.method === 'GET' && url.pathname === '/get-access-token') {
-        const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
-        return addCorsHeaders(new Response(JSON.stringify({ accessToken }), {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }));
-      }
-
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
         const formData = await request.json();
@@ -91,7 +67,7 @@ export default {
         console.log('Datos enviados a Email.js:', {
           service_id: EMAILJS_SERVICE_ID,
           template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_PRIVATE_KEY,
+          private_key: EMAILJS_PRIVATE_KEY,
           template_params: {
             nombre,
             email,
@@ -123,11 +99,12 @@ export default {
         });
 
         if (!emailResponse.ok) {
-          const errorDetails = await emailResponse.text(); // Captura la respuesta completa
+          const errorDetails = await emailResponse.text();
           console.error('Error al enviar el correo electrónico:', errorDetails);
           throw new Error(`Error al enviar el correo electrónico: ${errorDetails}`);
         }
 
+        // Devuelve una respuesta JSON válida
         return addCorsHeaders(new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
           status: 200,
           headers: {
@@ -137,7 +114,12 @@ export default {
       }
 
       // Manejar otras rutas o métodos no permitidos
-      return addCorsHeaders(new Response('Método no permitido', { status: 405 }));
+      return addCorsHeaders(new Response(JSON.stringify({ error: 'Método no permitido' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }));
     } catch (error) {
       console.error('Error:', error);
       return addCorsHeaders(new Response(JSON.stringify({ error: error.message }), {
