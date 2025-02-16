@@ -54,6 +54,9 @@ export default {
     try {
       const url = new URL(request.url);
 
+      console.log(`Método recibido: ${request.method}`);
+      console.log(`Ruta recibida: ${url.pathname}`);
+
       // Accede a las variables de entorno
       const credentials = JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS);
       const privateKey = credentials.private_key.replace(/\\n/g, '\n').trim();
@@ -85,6 +88,7 @@ export default {
       // Endpoint para procesar los datos del formulario
       if (request.method === 'POST' && url.pathname === '/process-form') {
         const formData = await request.json();
+        console.log('Datos recibidos:', formData);
 
         const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
 
@@ -117,11 +121,17 @@ export default {
             headers: { 'Content-Type': 'application/json' },
           }));
         }
+ // Simula el procesamiento del formulario
+ return new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
+  status: 200,
+  headers: { 'Content-Type': 'application/json' },
+});
 
-        return addCorsHeaders(new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }));
+
+        // return addCorsHeaders(new Response(JSON.stringify({ message: 'Formulario enviado correctamente' }), {
+        //   status: 200,
+        //   headers: { 'Content-Type': 'application/json' },
+        // }));
       }
 
       // Manejar otras rutas o métodos no permitidos
