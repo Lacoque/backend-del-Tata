@@ -133,7 +133,7 @@ export default {
           // Maneja la respuesta de EmailJS
           if (emailResponseBody === "OK") {
             return addCorsHeaders(
-              new Response(JSON.stringify({ message: 'Correo electrónico enviado correctamente' }), {
+              new Response(JSON.stringify({ status: "OK", message: 'Correo electrónico enviado correctamente' }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
               })
