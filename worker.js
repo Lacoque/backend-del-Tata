@@ -135,16 +135,16 @@ export default {
       }
 
       // Manejar otras rutas o métodos no permitidos
-      return addCorsHeaders(new Response(JSON.stringify({ error: 'Método no permitido' }), {
+      return new Response(JSON.stringify({ error: 'Método no permitido' }), {
         status: 405,
         headers: { 'Content-Type': 'application/json' },
-      }));
+      });
     } catch (error) {
       console.error('Error:', error);
-      return addCorsHeaders(new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
-      }));
+      });
     }
   },
 };
