@@ -126,9 +126,9 @@ export default {
           const emailResponseBody = await emailResponse.text();
           console.log('Respuesta de EmailJS:', emailResponseBody);
 
-          if (!emailResponse.ok) {
-            throw new Error(`Error al enviar el correo electrónico: ${emailResponseBody}`);
-          }
+          // if (!emailResponse.ok) {
+          //   throw new Error(`Error al enviar el correo electrónico: ${emailResponseBody}`);
+          // }
 
           // Maneja la respuesta de EmailJS
           if (emailResponseBody === "OK") {
