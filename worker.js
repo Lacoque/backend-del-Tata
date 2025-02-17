@@ -1,5 +1,4 @@
 import { SignJWT, importPKCS8 } from 'jose';
-
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
@@ -16,9 +15,7 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     })
       .setProtectedHeader({ alg: 'RS256' })
       .sign(privateKeyJWK);
-
     console.log('Token JWT generado:', jwt);
-
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -27,12 +24,10 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
         assertion: jwt,
       }),
     });
-
     if (!response.ok) {
       const errorDetails = await response.text();
       throw new Error(`Error al obtener el token de acceso: ${response.status} ${response.statusText}. Detalles: ${errorDetails}`);
     }
-
     const data = await response.json();
     return data.access_token;
   } catch (error) {
@@ -53,7 +48,6 @@ export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
-
       console.log(`Método recibido: ${request.method}`);
       console.log(`Ruta recibida: ${url.pathname}`);
 
@@ -72,7 +66,6 @@ export default {
         try {
           const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
           console.log('Token de acceso generado:', accessToken);
-
           return addCorsHeaders(
             new Response(JSON.stringify({ accessToken }), {
               status: 200,
@@ -81,7 +74,6 @@ export default {
           );
         } catch (error) {
           console.error('Error al generar el token de acceso:', error);
-
           return addCorsHeaders(
             new Response(JSON.stringify({ error: 'Error al generar el token de acceso' }), {
               status: 500,
@@ -126,14 +118,9 @@ export default {
           const emailResponseBody = await emailResponse.text();
           console.log('Respuesta de EmailJS:', emailResponseBody);
 
-          // if (!emailResponse.ok) {
-          //   throw new Error(`Error al enviar el correo electrónico: ${emailResponseBody}`);
-          // }
-
-          // Maneja la respuesta de EmailJS
           if (emailResponseBody === "OK") {
             return addCorsHeaders(
-              new Response(JSON.stringify({ status: "OK", message: 'Correo electrónico enviado correctamente' }), {
+              new Response(null, { // Respuesta vacía
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
               })
@@ -143,7 +130,6 @@ export default {
           }
         } catch (error) {
           console.error('Error al procesar el formulario:', error.message || error);
-
           return addCorsHeaders(
             new Response(JSON.stringify({ error: error.message || 'Error interno del servidor' }), {
               status: 500,
@@ -162,7 +148,6 @@ export default {
       );
     } catch (error) {
       console.error('Error:', error);
-
       return addCorsHeaders(
         new Response(JSON.stringify({ error: error.message }), {
           status: 500,
