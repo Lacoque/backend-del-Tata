@@ -7,5 +7,6 @@ account_id = "941c7578081b2ab8ee7836b33373b5da"
 
 [vars]
 GOOGLE_DRIVE_FOLDER_ID = "1YOMFe6BxHD3tdvSLOxy5s5ztulIjMuwf"
+EMAILJS_PUBLIC_KEY = "3-Q_I_P3_12dxNIJb"
 
 node_compat = true
