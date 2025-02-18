@@ -120,13 +120,18 @@ export default {
 
           if (emailResponseBody === "OK") {
             return addCorsHeaders(
-              new Response(null, { // Respuesta vacía
+              new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
               })
             );
           } else {
-            throw new Error('Respuesta inesperada de EmailJS');
+            return addCorsHeaders(
+              new Response(JSON.stringify({ status: "error", message: "Hubo un error al procesar el formulario" }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+              })
+            );
           }
         } catch (error) {
           console.error('Error al procesar el formulario:', error.message || error);
