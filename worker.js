@@ -67,7 +67,7 @@ export default {
           const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
           console.log('Token de acceso generado:', accessToken);
           return addCorsHeaders(
-            new Response(JSON.stringify({ accessToken }), {
+            new Response(JSON.stringify({ status: "success", accessToken }), {
               status: 200,
               headers: { 'Content-Type': 'application/json' },
             })
@@ -75,7 +75,7 @@ export default {
         } catch (error) {
           console.error('Error al generar el token de acceso:', error);
           return addCorsHeaders(
-            new Response(JSON.stringify({ error: 'Error al generar el token de acceso' }), {
+            new Response(JSON.stringify({ status: "error", message: "Error al generar el token de acceso" }), {
               status: 500,
               headers: { 'Content-Type': 'application/json' },
             })
@@ -93,7 +93,7 @@ export default {
           const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
           if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls?.length) {
             return addCorsHeaders(
-              new Response(JSON.stringify({ status:"error", message:"Faltan datos obligatorios" }), {
+              new Response(JSON.stringify({ status: "error", message: "Faltan datos obligatorios en el formulario" }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' },
               })
@@ -109,7 +109,6 @@ export default {
             body: JSON.stringify({
               service_id: env.EMAILJS_SERVICE_ID,
               template_id: env.EMAILJS_TEMPLATE_ID,
-              public_key: env.EMAILJS_PUBLIC_KEY,
               user_id: env.EMAILJS_PRIVATE_KEY,
               template_params: formData,
             }),
@@ -117,27 +116,43 @@ export default {
 
           // Logs para depurar la respuesta de EmailJS
           const emailResponseBody = await emailResponse.text();
-          console.log('Respuesta de EmailJS:', emailResponseBody);
+          console.log('Respuesta completa de EmailJS:', emailResponseBody);
 
-          if (emailResponseBody === "OK") {
-            return addCorsHeaders(
-              new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' },
-              })
-            );
-          } else {
-            return addCorsHeaders(
-              new Response(JSON.stringify({ status: "error", message: "Hubo un error al procesar el formulario" }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              })
-            );
+          try {
+            // Intenta parsear la respuesta como JSON
+            const emailJson = JSON.parse(emailResponseBody);
+            console.log('Respuesta de EmailJS (JSON):', emailJson);
+
+            if (emailJson.status === "error") {
+              return addCorsHeaders(
+                new Response(JSON.stringify({ status: "error", message: emailJson.message || "Hubo un error al procesar el formulario" }), {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+              );
+            }
+          } catch (parseError) {
+            // Si no es JSON, maneja la respuesta como texto plano
+            if (emailResponseBody.trim() === "OK") {
+              return addCorsHeaders(
+                new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
+                  status: 200,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+              );
+            } else {
+              return addCorsHeaders(
+                new Response(JSON.stringify({ status: "error", message: emailResponseBody || "Hubo un error al procesar el formulario" }), {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' },
+                })
+              );
+            }
           }
         } catch (error) {
           console.error('Error al procesar el formulario:', error.message || error);
           return addCorsHeaders(
-            new Response(JSON.stringify({ error: error.message || 'Error interno del servidor' }), {
+            new Response(JSON.stringify({ status: "error", message: error.message || "Error interno del servidor" }), {
               status: 500,
               headers: { 'Content-Type': 'application/json' },
             })
@@ -147,15 +162,15 @@ export default {
 
       // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(
-        new Response(JSON.stringify({ status:"error", message: 'Método no permitido' }), {
+        new Response(JSON.stringify({ status: "error", message: "Método no permitido" }), {
           status: 405,
           headers: { 'Content-Type': 'application/json' },
         })
       );
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error inesperado:', error);
       return addCorsHeaders(
-        new Response(JSON.stringify({ status:"error", menssage:"Error inesperado"}), {
+        new Response(JSON.stringify({ status: "error", message: "Error inesperado" }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         })
