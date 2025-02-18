@@ -84,23 +84,29 @@ export default {
       }
 
       // Endpoint para procesar los datos del formulario
-      if (request.method === 'POST' && url.pathname === '/process-form') {
-        try {
-          const formData = await request.json();
-          console.log('Datos recibidos:', formData);
+       if (request.method === 'POST' && url.pathname === '/process-form') {
+        return new Response(JSON.stringify({ status: "error", message: "Ruta no encontrada" }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      //   try {
+         //  const formData = await request.json();
+      //     console.log('Datos recibidos:', formData);
 
           // Validación de datos
-          const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
-          if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls?.length) {
-            return addCorsHeaders(
-              new Response(JSON.stringify({ status: "error", message: "Faltan datos obligatorios en el formulario" }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              })
-            );
-          }
+          //const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
+          // if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls?.length) {
+          //   return addCorsHeaders(
+          //     new Response(JSON.stringify({ status: "error", message: "Faltan datos obligatorios en el formulario" }), {
+          //       status: 400,
+          //       headers: { 'Content-Type': 'application/json' },
+          //     })
+          //   );
+          // }
+          //console.log('Datos enviados a Email.js:', formData);
+  
 
-          console.log('Datos enviados a Email.js:', formData);
+          
 
           // Envía el correo electrónico usando EmailJS
           // const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
@@ -115,66 +121,68 @@ export default {
           // });
 
           // Logs para depurar la respuesta de EmailJS
-          const emailResponseBody = await emailResponse.text();
-          console.log('Respuesta completa de EmailJS:', emailResponseBody);
+  //         const emailResponseBody = await emailResponse.text();
+  //         console.log('Respuesta completa de EmailJS:', emailResponseBody);
 
-          try {
-            // Intenta parsear la respuesta como JSON
-            const emailJson = JSON.parse(emailResponseBody);
-            console.log('Respuesta de EmailJS (JSON):', emailJson);
+  //         try {
+  //           // Intenta parsear la respuesta como JSON
+  //           const emailJson = JSON.parse(emailResponseBody);
+  //           console.log('Respuesta de EmailJS (JSON):', emailJson);
 
-            if (emailJson.status === "error") {
-              return addCorsHeaders(
-                new Response(JSON.stringify({ status: "error", message: emailJson.message || "Hubo un error al procesar el formulario" }), {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                })
-              );
-            }
-          } catch (parseError) {
-            // Si no es JSON, maneja la respuesta como texto plano
-            if (emailResponseBody.trim() === "OK") {
-              return addCorsHeaders(
-                new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
-                  status: 200,
-                  headers: { 'Content-Type': 'application/json' },
-                })
-              );
-            } else {
-              return addCorsHeaders(
-                new Response(JSON.stringify({ status: "error", message: emailResponseBody || "Hubo un error al procesar el formulario" }), {
-                  status: 400,
-                  headers: { 'Content-Type': 'application/json' },
-                })
-              );
-            }
-          }
-        } catch (error) {
-          console.error('Error al procesar el formulario:', error.message || error);
-          return addCorsHeaders(
-            new Response(JSON.stringify({ status: "error", message: error.message || "Error interno del servidor" }), {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            })
-          );
-        }
-      }
+  //           if (emailJson.status === "error") {
+  //             return addCorsHeaders(
+  //               new Response(JSON.stringify({ status: "error", message: emailJson.message || "Hubo un error al procesar el formulario" }), {
+  //                 status: 400,
+  //                 headers: { 'Content-Type': 'application/json' },
+  //               })
+  //             );
+  //           }
+  //         } catch (parseError) {
+  //           // Si no es JSON, maneja la respuesta como texto plano
+  //           if (emailResponseBody.trim() === "OK") {
+  //             return addCorsHeaders(
+  //               new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
+  //                 status: 200,
+  //                 headers: { 'Content-Type': 'application/json' },
+  //               })
+  //             );
+  //           } else {
+  //             return addCorsHeaders(
+  //               new Response(JSON.stringify({ status: "error", message: emailResponseBody || "Hubo un error al procesar el formulario" }), {
+  //                 status: 400,
+  //                 headers: { 'Content-Type': 'application/json' },
+  //               })
+  //             );
+  //           }
+  //         }
+  //       } catch (error) {
+  //         console.error('Error al procesar el formulario:', error.message || error);
+  //         return addCorsHeaders(
+  //           new Response(JSON.stringify({ status: "error", message: error.message || "Error interno del servidor" }), {
+  //             status: 500,
+  //             headers: { 'Content-Type': 'application/json' },
+  //           })
+  //         );
+  //       }
+  //     }
+}
 
-      // Manejar otras rutas o métodos no permitidos
+  //     // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(
         new Response(JSON.stringify({ status: "error", message: "Método no permitido" }), {
-          status: 405,
+       status: 405,
           headers: { 'Content-Type': 'application/json' },
-        })
+         })
       );
-    } catch (error) {
-      console.error('Error inesperado:', error);
+     } catch (error) {
+     console.error('Error inesperado:', error);
       return addCorsHeaders(
         new Response(JSON.stringify({ status: "error", message: "Error inesperado" }), {
-          status: 500,
+         status: 500,
           headers: { 'Content-Type': 'application/json' },
         })
       );
     }
   },
-};
+}
+   
