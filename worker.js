@@ -93,7 +93,7 @@ export default {
           const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
           if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls?.length) {
             return addCorsHeaders(
-              new Response(JSON.stringify({ error: 'Faltan datos obligatorios en el formulario' }), {
+              new Response(JSON.stringify({ status:"error", message:"Faltan datos obligatorios" }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' },
               })
@@ -146,7 +146,7 @@ export default {
 
       // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(
-        new Response(JSON.stringify({ error: 'Método no permitido' }), {
+        new Response(JSON.stringify({ status:"error", message: 'Método no permitido' }), {
           status: 405,
           headers: { 'Content-Type': 'application/json' },
         })
@@ -154,7 +154,7 @@ export default {
     } catch (error) {
       console.error('Error:', error);
       return addCorsHeaders(
-        new Response(JSON.stringify({ error: error.message }), {
+        new Response(JSON.stringify({ status:"error", menssage:"Error inesperado"}), {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
         })
