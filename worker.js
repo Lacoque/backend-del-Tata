@@ -109,6 +109,7 @@ export default {
             body: JSON.stringify({
               service_id: env.EMAILJS_SERVICE_ID,
               template_id: env.EMAILJS_TEMPLATE_ID,
+              public_key: env.EMAILJS_PUBLIC_KEY,
               user_id: env.EMAILJS_PRIVATE_KEY,
               template_params: formData,
             }),
