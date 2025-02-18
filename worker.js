@@ -103,16 +103,16 @@ export default {
           console.log('Datos enviados a Email.js:', formData);
 
           // Envía el correo electrónico usando EmailJS
-          const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              service_id: env.EMAILJS_SERVICE_ID,
-              template_id: env.EMAILJS_TEMPLATE_ID,
-              user_id: env.EMAILJS_PRIVATE_KEY,
-              template_params: formData,
-            }),
-          });
+          // const emailResponse = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({
+          //     service_id: env.EMAILJS_SERVICE_ID,
+          //     template_id: env.EMAILJS_TEMPLATE_ID,
+          //     user_id: env.EMAILJS_PRIVATE_KEY,
+          //     template_params: formData,
+          //   }),
+          // });
 
           // Logs para depurar la respuesta de EmailJS
           const emailResponseBody = await emailResponse.text();
