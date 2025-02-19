@@ -1,7 +1,6 @@
 import { SignJWT, importPKCS8 } from 'jose';
 
 const GOOGLE_DRIVE_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
-const EMAIL_JS_API_URL = 'https://api.emailjs.com/api/v1.0/email/send';
 
 // Función para generar un token JWT
 async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
@@ -16,7 +15,6 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     })
       .setProtectedHeader({ alg: 'RS256' })
       .sign(privateKeyJWK);
-
     console.log('Token JWT generado:', jwt);
 
     const response = await fetch('https://oauth2.googleapis.com/token', {
@@ -44,7 +42,7 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
 // Función para agregar encabezados CORS
 function addCorsHeaders(response) {
   response.headers.set('Access-Control-Allow-Origin', '*'); // Permite solicitudes desde cualquier origen
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); // Métodos permitidos
+  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS'); // Métodos permitidos
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type'); // Encabezados permitidos
   return response;
 }
@@ -53,6 +51,7 @@ export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
+
       console.log(`Método recibido: ${request.method}`);
       console.log(`Ruta recibida: ${url.pathname}`);
 
@@ -71,6 +70,7 @@ export default {
         try {
           const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
           console.log('Token de acceso generado:', accessToken);
+
           return addCorsHeaders(
             new Response(JSON.stringify({ status: "success", accessToken }), {
               status: 200,
@@ -79,6 +79,7 @@ export default {
           );
         } catch (error) {
           console.error('Error al generar el token de acceso:', error);
+
           return addCorsHeaders(
             new Response(JSON.stringify({ status: "error", message: "Error al generar el token de acceso" }), {
               status: 500,
@@ -86,86 +87,6 @@ export default {
             })
           );
         }
-      }
-
-      // Endpoint para procesar los datos del formulario
-      if (request.method === 'POST' && url.pathname === '/process-form') {
-        try {
-          const formData = await request.json();
-          console.log('Datos recibidos:', formData);
-
-          // Validación de datos
-          const { nombre, email, grupo, espectaculo, sinopsis, duracion, fileUrls } = formData;
-          if (!nombre || !email || !grupo || !espectaculo || !sinopsis || !duracion || !fileUrls) {
-            return addCorsHeaders(
-              new Response(JSON.stringify({ status: "error", message: "Faltan datos obligatorios en el formulario" }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              })
-            );
-          }
-
-          // Envía el correo electrónico usando EmailJS
-          const emailResponse = await fetch(EMAIL_JS_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              service_id: env.EMAILJS_SERVICE_ID,
-              template_id: env.EMAILJS_TEMPLATE_ID,
-              user_id: env.EMAILJS_PRIVATE_KEY,
-              template_params: formData,
-            }),
-          });
-          if (!emailResponse.ok) {
-            const errorDetails = await emailResponse.text();
-            throw new Error(`Error al enviar el correo: ${errorDetails}`);
-          }
-      
-          // Respuesta exitosa
-          return addCorsHeaders(
-            new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            })
-          );
-        } catch (error) {
-          console.error('Error al procesar el formulario:', error);
-          return addCorsHeaders(
-            new Response(JSON.stringify({ status: "error", message: error.message || "Error interno del servidor" }), {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            })
-          );
-        }
-
-          // Logs para depurar la respuesta de EmailJS
-          // const emailResponseBody = await emailResponse.text();
-          // console.log('Respuesta completa de EmailJS:', emailResponseBody);
-
-          // if (emailResponseBody.trim() === "OK") {
-          //   return addCorsHeaders(
-          //     new Response(JSON.stringify({ status: "success", message: "Formulario procesado correctamente" }), {
-          //       status: 200,
-          //       headers: { 'Content-Type': 'application/json' },
-          //     })
-          //   );
-          // } else {
-          //   return addCorsHeaders(
-          //     new Response(JSON.stringify({ status: "error", message: "Hubo un error al procesar el formulario" }), {
-          //       status: 400,
-          //       headers: { 'Content-Type': 'application/json' },
-          //     })
-          //   );
-          // }
-        // } catch (error) {
-        //   console.error('Error al procesar el formulario:', error);
-        //   return addCorsHeaders(
-        //     new Response(JSON.stringify({ status: "error", message: "Error interno del servidor" }), {
-        //       status: 500,
-        //       headers: { 'Content-Type': 'application/json' },
-        //     })
-        //   );
-        // }
       }
 
       // Manejar otras rutas o métodos no permitidos
@@ -177,6 +98,7 @@ export default {
       );
     } catch (error) {
       console.error('Error inesperado:', error);
+
       return addCorsHeaders(
         new Response(JSON.stringify({ status: "error", message: "Error inesperado" }), {
           status: 500,
