@@ -169,7 +169,7 @@ export default {
 
   //     // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(
-        new Response(JSON.stringify({ status: "success", message: "Método no permitido" }), {
+        new Response(JSON.stringify({ status: "error", message: "Método no permitido" }), {
        status: 405,
           headers: { 'Content-Type': 'application/json' },
          })
@@ -177,7 +177,7 @@ export default {
      } catch (error) {
      console.error('Error inesperado:', error);
       return addCorsHeaders(
-        new Response(JSON.stringify({ status: "success", message: "Error inesperado" }), {
+        new Response(JSON.stringify({ status: "error", message: "Error inesperado" }), {
          status: 500,
           headers: { 'Content-Type': 'application/json' },
         })
