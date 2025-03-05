@@ -91,18 +91,16 @@ export default {
           //  Google Sheets
           if (request.method === 'GET' && url.pathname === '/sheet-data') {
             try {
-            
-             
-              const day = url.searchParams.get('day');
-    if (!day) throw new Error("Falta el parámetro 'day'");
-    const allowedDays = ['Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']; 
-    if (!allowedDays.includes(day)) {
-      throw new Error(`Día inválido. Valores permitidos: ${allowedDays.join(', ')}`);
+            const day = url.searchParams.get('day');
+             if (!day) throw new Error("Falta el parámetro 'day'");
+                  const allowedDays = ['Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']; 
+             if (!allowedDays.includes(day)) {
+                 throw new Error(`Día inválido. Valores permitidos: ${allowedDays.join(', ')}`);
     }
     const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
               
               const spreadsheetId = 'h1iNUtmsC1luRC7JnTSEVIZbYXdr_AV5RAoPH7JeNCJdw'; 
-              const range = 'Sheet1';
+              const range = `'${day}'`;;
     
               const response = await fetch(
                 `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?access_token=${accessToken}`
