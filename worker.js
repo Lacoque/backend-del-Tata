@@ -8,7 +8,7 @@ async function generateGoogleDriveAccessToken(privateKey, clientEmail) {
     const privateKeyJWK = await importPKCS8(privateKey, 'RS256');
     const jwt = await new SignJWT({
       iss: clientEmail,
-      scope: 'https://www.googleapis.com/auth/drive',
+      scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets.readonly',
       aud: 'https://oauth2.googleapis.com/token',
       exp: Math.floor(Date.now() / 1000) + 3600, // Expira en 1 hora
       iat: Math.floor(Date.now() / 1000), // Tiempo actual
@@ -88,6 +88,42 @@ export default {
           );
         }
       }
+          //  Google Sheets
+          if (request.method === 'GET' && url.pathname === '/sheet-data') {
+            try {
+            
+             
+              const day = url.searchParams.get('day');
+    if (!day) throw new Error("Falta el parámetro 'day'");
+    const allowedDays = ['Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']; 
+    if (!allowedDays.includes(day)) {
+      throw new Error(`Día inválido. Valores permitidos: ${allowedDays.join(', ')}`);
+    }
+    const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
+              
+              const spreadsheetId = 'h1iNUtmsC1luRC7JnTSEVIZbYXdr_AV5RAoPH7JeNCJdw'; 
+              const range = 'Sheet1';
+    
+              const response = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?access_token=${accessToken}`
+              );
+    
+              if (!response.ok) throw new Error('Error al obtener datos de Sheets');
+    
+              const data = await response.json();
+              return addCorsHeaders(new Response(JSON.stringify(data), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              }));
+    
+            } catch (error) {
+              console.error('Error en /sheet-data:', error);
+              return addCorsHeaders(new Response(JSON.stringify({
+                status: "error",
+                message: "Error al obtener datos de Sheets"
+              }), { status: 500 }));
+            }
+          } 
 
       // Manejar otras rutas o métodos no permitidos
       return addCorsHeaders(
