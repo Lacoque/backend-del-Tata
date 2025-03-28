@@ -93,7 +93,7 @@ export default {
             try {
             const day = url.searchParams.get('day');
              if (!day) throw new Error("Falta el parámetro 'day'");
-                  const allowedDays = ['Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']; 
+                  const allowedDays = ['Martes03/06', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']; 
              if (!allowedDays.includes(day)) {
                  throw new Error(`Día inválido. Valores permitidos: ${allowedDays.join(', ')}`);
     }
