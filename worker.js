@@ -100,7 +100,7 @@ export default {
     const accessToken = await generateGoogleDriveAccessToken(privateKey, clientEmail);
               
               const spreadsheetId = '166XDOCcLB-dQFosif3sxkgIsWvwS5qd_W5UL-PZk2_g'; 
-              const range = `'${day}'!A1:A7`;
+              const range = `'${day}'!A1:D7`;
     
               const response = await fetch(
                 `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?access_token=${accessToken}`
